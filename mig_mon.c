@@ -653,6 +653,7 @@ int mon_mm_dirty(long mm_size, long dirty_rate, dirty_pattern pattern,
         return -1;
     }
 
+    printf("Binary version: \t%s\n", VERSION);
     printf("Test memory size: \t%ld (MB)\n", mm_size);
     printf("Backend page size: \t%ld (Bytes)\n", huge_page_size);
     printf("Dirty step size: \t%ld (Bytes)\n", page_size);
