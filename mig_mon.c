@@ -27,7 +27,7 @@ typedef enum {
     PATTERN_NUM,
 } dirty_pattern;
 
-#define  VERSION  "v0.1.2"
+#define  VERSION  "v0.2.0"
 
 char *pattern_str[PATTERN_NUM] = { "sequential", "random", "once" };
 
