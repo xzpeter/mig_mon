@@ -40,7 +40,7 @@ static const char *prog_name = NULL;
 static long n_cpus;
 static long page_size;
 
-void usage(void)
+void usage_downtime(void)
 {
     puts("");
     puts("======== VM Migration Downtime Measurement ========");
@@ -72,13 +72,27 @@ void usage(void)
     printf("3. trigger loop migration (e.g., 100 times)\n");
     printf("4. see the results on client side.\n");
     puts("");
+}
 
+void usage_mm_dirty(void)
+{
     puts("======== Memory Dirty Workload ========");
     puts("");
     puts("This tool can also generate dirty memory workload in different ways.");
     puts("Please see the command 'mm_dirty' for more information.");
     puts("");
+}
 
+void version(void)
+{
+    puts("");
+    printf("Version: %s\n", VERSION);
+    puts("");
+}
+
+void usage(void)
+{
+    puts("");
     printf("usage: %s server [spike_log]\n", prog_name);
     printf("       %s client server_ip [interval_ms]\n", prog_name);
     printf("       %s server_rr\n", prog_name);
@@ -96,8 +110,6 @@ void usage(void)
     printf("       \t          \tsequential - dirty memory sequentially\n");
     printf("       \t          \trandom - dirty memory randomly\n");
     printf("       \t          \tonce - dirty memory once then keep idle\n");
-    puts("");
-    printf("Version: %s\n\n", VERSION);
 }
 
 dirty_pattern parse_dirty_pattern(const char *str)
@@ -711,11 +723,20 @@ int main(int argc, char *argv[])
 
     if (argc == 1) {
         usage();
+        version();
         return -1;
     }
 
     work_mode = argv[1];
-    if (!strcmp(work_mode, "server")) {
+    if (!strcmp(work_mode, "-h") || !strcmp(work_mode, "--help")) {
+        usage();
+        usage_downtime();
+        usage_mm_dirty();
+        return -1;
+    } else if (!strcmp(work_mode, "-v") || !strcmp(work_mode, "--version")) {
+        version();
+        return -1;
+    } else if (!strcmp(work_mode, "server")) {
         puts("starting server mode...");
         if (argc >= 3) {
             spike_log = argv[2];
