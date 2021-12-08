@@ -661,7 +661,7 @@ int mon_mm_dirty(long mm_size, long dirty_rate, dirty_pattern pattern,
     } else {
         printf("Dirty memory rate: \tMaximum\n");
     }
-    printf("Dirty pattern: \t%s\n", pattern_str[pattern]);
+    printf("Dirty pattern: \t\t%s\n", pattern_str[pattern]);
 
     mm_ptr = mm_buf;
     mm_end = mm_buf + mm_size * N_1M;
