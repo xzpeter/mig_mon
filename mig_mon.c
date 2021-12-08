@@ -609,6 +609,7 @@ int mon_mm_dirty(long mm_size, long dirty_rate, dirty_pattern pattern)
     unsigned char cur_val = 2;
     long pages_per_mb = N_1M / page_size;
     uint64_t time_iter, time_now;
+    uint64_t sleep_ms = 0, elapsed_ms;
     unsigned long dirtied_mb = 0, mm_npages;
     float speed;
     int i;
@@ -682,18 +683,21 @@ int mon_mm_dirty(long mm_size, long dirty_rate, dirty_pattern pattern)
              * We have dirtied enough, wait for a while until we reach
              * the next second.
              */
-            long sleep_ms = 1000 - get_msec() + time_iter;
+            sleep_ms = 1000 - get_msec() + time_iter;
             if (sleep_ms > 0) {
                 usleep(sleep_ms * 1000);
             }
             while (get_msec() - time_iter < 1000);
         }
         time_now = get_msec();
-        if (time_now - time_iter >= 1000) {
-            speed = 1.0 * dirtied_mb / (time_now - time_iter) * 1000;
-            printf("Dirty rate: %.0f (MB/s), duration: %"PRIu64" (ms)\n",
-                   speed, time_now - time_iter);
+        elapsed_ms = time_now - time_iter;
+        if (elapsed_ms >= 1000) {
+            speed = 1.0 * dirtied_mb / elapsed_ms * 1000;
+            printf("Dirty rate: %.0f (MB/s), duration: %"PRIu64" (ms), "
+                   "load: %.2f%%\n", speed, elapsed_ms,
+                   100.0 * (elapsed_ms - sleep_ms) / elapsed_ms);
             time_iter = time_now;
+            sleep_ms = 0;
             dirtied_mb = 0;
         }
     }
