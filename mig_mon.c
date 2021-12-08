@@ -85,7 +85,6 @@ void usage_mm_dirty(void)
 
 void version(void)
 {
-    puts("");
     printf("Version: %s\n", VERSION);
     puts("");
 }
@@ -98,18 +97,13 @@ void usage(void)
     printf("       %s server_rr\n", prog_name);
     printf("       %s client_rr server_ip [interval_ms [spike_log]]\n",
            prog_name);
-    puts("");
-    printf("       %s mm_dirty [mm_size [dirty_rate [pattern]]]\n",
+    printf("       %s mm_dirty [-m mm_size] [-r dirty_rate] [-p pattern]\n",
            prog_name);
-    printf("       \t mm_size: \tin MB (default: %d)\n", DEF_MM_DIRTY_SIZE);
-    printf("       \t dirty_rate: \tin MB/s (default: unlimited)\n");
-    printf("       \t pattern: \t\"sequential\", \"random\", or \"once\"\n");
-    printf("       \t          \t(default: \"%s\")\n",
-           pattern_str[DEF_MM_DIRTY_PATTERN]);
+    printf("       \t -m: \tin MB (default: %d)\n", DEF_MM_DIRTY_SIZE);
+    printf("       \t -r: \tin MB/s (default: unlimited)\n");
+    printf("       \t -p: \t\"sequential\", \"random\", or \"once\"");
+    printf(" (default: \"%s\")\n", pattern_str[DEF_MM_DIRTY_PATTERN]);
     puts("");
-    printf("       \t          \tsequential - dirty memory sequentially\n");
-    printf("       \t          \trandom - dirty memory randomly\n");
-    printf("       \t          \tonce - dirty memory once then keep idle\n");
 }
 
 dirty_pattern parse_dirty_pattern(const char *str)
@@ -728,6 +722,7 @@ int main(int argc, char *argv[])
     }
 
     work_mode = argv[1];
+
     if (!strcmp(work_mode, "-h") || !strcmp(work_mode, "--help")) {
         usage();
         usage_downtime();
@@ -774,16 +769,35 @@ int main(int argc, char *argv[])
     } else if (!strcmp(work_mode, "mm_dirty")) {
         long dirty_rate = 0, mm_size = DEF_MM_DIRTY_SIZE;
         dirty_pattern pattern = DEF_MM_DIRTY_PATTERN;
+        int c;
 
-        if (argc >= 3) {
-            mm_size = atol(argv[2]);
+        while ((c = getopt(argc-1, argv+1, "hm:p:r:")) != -1) {
+            switch (c) {
+            case 'm':
+                mm_size = atol(optarg);
+                break;
+            case 'r':
+                dirty_rate = atol(optarg);
+                break;
+            case 'p':
+                pattern = parse_dirty_pattern(optarg);
+                break;
+            case 'h':
+            default:
+                usage();
+                return -1;
+            }
         }
-        if (argc >= 4) {
-            dirty_rate = atol(argv[3]);
+
+        /*
+         * We should have consumed all parameters.  This will dump an error if
+         * the user used the old mig_mon mm_dirty parameters.
+         */
+        if (optind != argc-1) {
+            usage();
+            return -1;
         }
-        if (argc >= 5) {
-            pattern = parse_dirty_pattern(argv[4]);
-        }
+
         ret = mon_mm_dirty(mm_size, dirty_rate, pattern);
     } else {
         usage();

@@ -8,4 +8,4 @@ default: mig_mon
 mig_mon: mig_mon.o
 
 clean:
-	@rm -rf *.o mig_mon
+	@rm -rf *.o mig_mon cscope*
