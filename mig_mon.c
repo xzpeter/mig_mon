@@ -16,6 +16,10 @@
 #include <errno.h>
 #include <pthread.h>
 
+#ifdef __linux__
+#include <linux/mman.h>
+#endif
+
 typedef enum {
     PATTERN_SEQ = 0,
     PATTERN_RAND = 1,
@@ -38,7 +42,12 @@ char *pattern_str[PATTERN_NUM] = { "sequential", "random", "once" };
 
 static const char *prog_name = NULL;
 static long n_cpus;
-static long page_size;
+/*
+ * huge_page_size stands for the real page size we used.  page_size will always
+ * be the smallest page size of the system, as that's the size that guest
+ * hypervisor will track dirty.
+ */
+static long page_size, huge_page_size;
 
 void usage_downtime(void)
 {
@@ -97,12 +106,13 @@ void usage(void)
     printf("       %s server_rr\n", prog_name);
     printf("       %s client_rr server_ip [interval_ms [spike_log]]\n",
            prog_name);
-    printf("       %s mm_dirty [-m mm_size] [-r dirty_rate] [-p pattern]\n",
+    printf("       %s mm_dirty [options...]\n",
            prog_name);
-    printf("       \t -m: \tin MB (default: %d)\n", DEF_MM_DIRTY_SIZE);
-    printf("       \t -r: \tin MB/s (default: unlimited)\n");
-    printf("       \t -p: \t\"sequential\", \"random\", or \"once\"");
-    printf(" (default: \"%s\")\n", pattern_str[DEF_MM_DIRTY_PATTERN]);
+    printf("       \t -m: \tmemory size in MB (default: %d)\n", DEF_MM_DIRTY_SIZE);
+    printf("       \t -r: \tdirty rate in MB/s (default: unlimited)\n");
+    printf("       \t -p: \twork pattern: \"sequential\", \"random\", or \"once\"\n");
+    printf("       \t\t(default: \"%s\")\n", pattern_str[DEF_MM_DIRTY_PATTERN]);
+    printf("       \t -P: \tpage size: \"2m\" or \"1g\" for huge pages\n");
     puts("");
 }
 
@@ -118,6 +128,27 @@ dirty_pattern parse_dirty_pattern(const char *str)
 
     fprintf(stderr, "Dirty pattern unknown: %s\n", str);
     exit(1);
+}
+
+int parse_huge_page_size(const char *size)
+{
+#ifdef __linux__
+    if (!strcmp(size, "2m") || !strcmp(size, "2M")) {
+        huge_page_size = 2UL << 20;
+        return MAP_HUGETLB | MAP_HUGE_2MB;
+    } else if (!strcmp(size, "1g") || !strcmp(size, "1G")) {
+        huge_page_size = 1UL << 30;
+        return MAP_HUGETLB | MAP_HUGE_1GB;
+    } else if (!strcmp(size, "4k") || !strcmp(size, "4K")) {
+        return 0;
+    } else {
+        printf("Unknown page size (%s), please specify 4K/2M/1G\n", size);
+        exit(1);
+    }
+#else
+    printf("Specify page size is not supported on non-Linux arch yet.\n");
+    exit(1);
+#endif
 }
 
 uint64_t get_msec(void)
@@ -599,7 +630,8 @@ static void prefault_memory(unsigned char *buf, unsigned long pages)
     printf("done\n");
 }
 
-int mon_mm_dirty(long mm_size, long dirty_rate, dirty_pattern pattern)
+int mon_mm_dirty(long mm_size, long dirty_rate, dirty_pattern pattern,
+                 unsigned map_flags)
 {
     unsigned char *mm_ptr, *mm_buf, *mm_end;
     /*
@@ -614,8 +646,16 @@ int mon_mm_dirty(long mm_size, long dirty_rate, dirty_pattern pattern)
     float speed;
     int i;
 
+    mm_buf = mmap(NULL, mm_size * N_1M, PROT_READ | PROT_WRITE,
+                  map_flags, -1, 0);
+    if (mm_buf == MAP_FAILED) {
+        fprintf(stderr, "%s: mmap() failed\n", __func__);
+        return -1;
+    }
+
     printf("Test memory size: \t%ld (MB)\n", mm_size);
-    printf("Page size: \t\t%ld (Bytes)\n", page_size);
+    printf("Backend page size: \t%ld (Bytes)\n", huge_page_size);
+    printf("Dirty step size: \t%ld (Bytes)\n", page_size);
     if (dirty_rate) {
         printf("Dirty memory rate: \t%ld (MB/s)\n", dirty_rate);
     } else {
@@ -623,12 +663,6 @@ int mon_mm_dirty(long mm_size, long dirty_rate, dirty_pattern pattern)
     }
     printf("Dirty pattern: \t%s\n", pattern_str[pattern]);
 
-    mm_buf = mmap(NULL, mm_size * N_1M, PROT_READ | PROT_WRITE,
-                  MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-    if (mm_buf == MAP_FAILED) {
-        fprintf(stderr, "%s: mmap() failed\n", __func__);
-        return -1;
-    }
     mm_ptr = mm_buf;
     mm_end = mm_buf + mm_size * N_1M;
     mm_npages = (unsigned long) ((mm_end - mm_ptr) / page_size);
@@ -715,7 +749,7 @@ int main(int argc, char *argv[])
     const char *spike_log = MIG_MON_SPIKE_LOG_DEF;
 
     n_cpus = sysconf(_SC_NPROCESSORS_ONLN);
-    page_size = getpagesize();
+    page_size = huge_page_size = getpagesize();
 
     prog_name = argv[0];
 
@@ -773,9 +807,10 @@ int main(int argc, char *argv[])
     } else if (!strcmp(work_mode, "mm_dirty")) {
         long dirty_rate = 0, mm_size = DEF_MM_DIRTY_SIZE;
         dirty_pattern pattern = DEF_MM_DIRTY_PATTERN;
+        int map_flags = MAP_ANONYMOUS | MAP_PRIVATE;
         int c;
 
-        while ((c = getopt(argc-1, argv+1, "hm:p:r:")) != -1) {
+        while ((c = getopt(argc-1, argv+1, "hm:p:P:r:")) != -1) {
             switch (c) {
             case 'm':
                 mm_size = atol(optarg);
@@ -785,6 +820,9 @@ int main(int argc, char *argv[])
                 break;
             case 'p':
                 pattern = parse_dirty_pattern(optarg);
+                break;
+            case 'P':
+                map_flags |= parse_huge_page_size(optarg);
                 break;
             case 'h':
             default:
@@ -798,11 +836,12 @@ int main(int argc, char *argv[])
          * the user used the old mig_mon mm_dirty parameters.
          */
         if (optind != argc-1) {
+            printf("Unknown extra parameters detected.\n");
             usage();
             return -1;
         }
 
-        ret = mon_mm_dirty(mm_size, dirty_rate, pattern);
+        ret = mon_mm_dirty(mm_size, dirty_rate, pattern, map_flags);
     } else {
         usage();
         return -1;
