@@ -101,13 +101,15 @@ void version(void)
 void usage(void)
 {
     puts("");
-    printf("usage: %s server [spike_log]\n", prog_name);
+    puts("This tool is a toolset of VM live migration testing & debugging.");
+    puts("");
+    puts("Usage:");
+    printf("       %s server [spike_log]\n", prog_name);
     printf("       %s client server_ip [interval_ms]\n", prog_name);
     printf("       %s server_rr\n", prog_name);
-    printf("       %s client_rr server_ip [interval_ms [spike_log]]\n",
-           prog_name);
-    printf("       %s mm_dirty [options...]\n",
-           prog_name);
+    printf("       %s client_rr server_ip [interval_ms [spike_log]]\n", prog_name);
+    puts("");
+    printf("       %s mm_dirty [options...]\n", prog_name);
     printf("       \t -m: \tmemory size in MB (default: %d)\n", DEF_MM_DIRTY_SIZE);
     printf("       \t -r: \tdirty rate in MB/s (default: unlimited)\n");
     printf("       \t -p: \twork pattern: \"sequential\", \"random\", or \"once\"\n");
