@@ -1,9 +1,12 @@
-CFLAGS=-O3 -Wall -Werror
+CFLAGS=-O3 -g -Wall -Werror
 LDFLAGS=-lpthread
 
-.PHONY: clean
+.PHONY: clean cscope
 
-default: mig_mon
+default: mig_mon cscope
+
+cscope:
+	@cscope -bq *.c
 
 mig_mon: mig_mon.o
 
