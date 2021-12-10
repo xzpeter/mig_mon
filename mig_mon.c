@@ -108,8 +108,15 @@ void usage_mm_dirty(void)
 {
     puts("======== Memory Dirty Workload ========");
     puts("");
-    puts("This tool can also generate dirty memory workload in different ways.");
-    puts("Please see the command 'mm_dirty' for more information.");
+    puts("This sub-tool can also generate dirty memory workload in different ways.");
+    puts("");
+    puts("Example 1: generate 500MB/s random dirty workload upon 200GB memory using:");
+    puts("");
+    printf("  %s mm_dirty -m 200000 -r 500 -p random\n", prog_name);
+    puts("");
+    puts("Example 2: dirty 10GB memory then keep idle after dirtying:");
+    puts("");
+    printf("  %s mm_dirty -m 10000 -p once\n", prog_name);
     puts("");
 }
 
@@ -117,10 +124,30 @@ void usage_vm(void)
 {
     puts("======== Emulate VM Live Migrations ========");
     puts("");
-    puts("This tool can be used to emulate live migration TCP streams.");
+    puts("This sub-tool can be used to emulate live migration TCP streams.");
     puts("");
-    puts("To start a src VM emulation, use '-s'.");
-    puts("To start a dst VM emulation, use '-d'.");
+    puts("There're two types of live migration: (1) precopy (2) postcopy.");
+    puts("This tool can emulate (1) or (2) or (1+2) case by specifying");
+    puts("different '-t' parameters.");
+    puts("");
+    puts("For precopy stream, it's the bandwidth that matters.  The bandwidth");
+    puts("information will be dumped per-second on src VM.");
+    puts("");
+    puts("For postcopy stream, it's the latency that matters.  The average/maximum");
+    puts("latency value of page requests will be dumped per-second on dst VM.");
+    puts("");
+    puts("Example:");
+    puts("");
+    puts("To start the (emulated) destination VM, one can run this on dest host:");
+    puts("");
+    printf("  %s vm -d\n", prog_name);
+    puts("");
+    puts("Then, to start a src VM emulation and start both live migration streams,");
+    puts("one can run this command on src host:");
+    puts("");
+    printf("  %s vm -s -H $DEST_IP -t precopy -t postcopy\n", prog_name);
+    puts("");
+    puts("Specifying both '-t' will just enable both migration streams.");
     puts("");
 }
 
@@ -1626,6 +1653,7 @@ int main(int argc, char *argv[])
                 break;
             case 'h':
             default:
+                usage();
                 usage_vm();
                 return -1;
             }
@@ -1655,6 +1683,7 @@ int main(int argc, char *argv[])
             case 'h':
             default:
                 usage();
+                usage_mm_dirty();
                 return -1;
             }
         }
