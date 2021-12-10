@@ -55,6 +55,7 @@ char *pattern_str[PATTERN_NUM] = { "sequential", "random", "once" };
 
 static const char *prog_name = NULL;
 static long n_cpus;
+static short mig_mon_port = MIG_MON_PORT;
 /*
  * huge_page_size stands for the real page size we used.  page_size will always
  * be the smallest page size of the system, as that's the size that guest
@@ -524,7 +525,7 @@ int mon_server(const char *spike_log, mon_server_cbk server_callback)
 
     svr_addr.sin_family = AF_INET;
     svr_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    svr_addr.sin_port = MIG_MON_PORT;
+    svr_addr.sin_port = mig_mon_port;
 
     ret = bind(sock, (struct sockaddr *)&svr_addr, sizeof(svr_addr));
     if (ret == -1) {
@@ -532,7 +533,7 @@ int mon_server(const char *spike_log, mon_server_cbk server_callback)
         return -1;
     }
 
-    printf("listening on UDP port %d...\n", MIG_MON_PORT);
+    printf("listening on UDP port %d...\n", mig_mon_port);
 #if MIG_MON_SINGLE_CLIENT
     printf("allowing single client only.\n");
 #else
@@ -658,7 +659,7 @@ int mon_client(const char *server_ip, int interval_ms,
     }
 
     addr.sin_family = AF_INET;
-    addr.sin_port = MIG_MON_PORT;
+    addr.sin_port = mig_mon_port;
     if (inet_aton(server_ip, &addr.sin_addr) != 1) {
         printf("server ip '%s' invalid\n", server_ip);
         ret = -1;
@@ -1306,7 +1307,7 @@ int mon_start_src(vm_args *args)
     }
 
     server.sin_family = AF_INET;
-    server.sin_port = htons(MIG_MON_PORT);
+    server.sin_port = htons(mig_mon_port);
     if (inet_aton(args->src_target_ip, &server.sin_addr) != 1) {
         printf("Destination VM address '%s' invalid\n", args->src_target_ip);
         return -1;
@@ -1489,7 +1490,7 @@ int mon_start_dst(vm_args *args)
 
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons(MIG_MON_PORT);
+    server.sin_port = htons(mig_mon_port);
 
     ret = bind(sock, (struct sockaddr *)&server, sizeof(server));
     if (ret < 0) {
