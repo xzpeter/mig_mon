@@ -30,11 +30,12 @@ latency value of page requests will be dumped per-second on dst VM.
 This sub-command has below parameters:
 
     ./mig_mon vm [options...]
-      -d:    emulate a dst VM
-      -H:    specify dst VM IP (required for -s)
-      -s:    emulate a src VM
-      -S:    specify size of the VM (GB)
-      -t:    specify tests (precopy, postcopy)
+      -d:    Emulate a dst VM
+      -h:    Dump help message
+      -H:    Specify dst VM IP (required for -s)
+      -s:    Emulate a src VM
+      -S:    Specify size of the VM (GB)
+      -t:    Specify tests (precopy, postcopy)
 
 Example usage:
 

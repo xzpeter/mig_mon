@@ -183,6 +183,7 @@ void usage(void)
     printf("       \t -d: \tEmulate a dst VM\n");
     printf("       \t -h: \tDump help message\n");
     printf("       \t -H: \tSpecify dst VM IP (required for -s)\n");
+    printf("       \t -p: \tSpecify connect/listen port\n");
     printf("       \t -s: \tEmulate a src VM\n");
     printf("       \t -S: \tSpecify size of the VM (GB)\n");
     printf("       \t -t: \tSpecify tests (precopy, postcopy)\n");
@@ -1636,22 +1637,25 @@ int main(int argc, char *argv[])
         };
         int c;
 
-        while ((c = getopt(argc-1, argv+1, "dhsS:t:H:")) != -1) {
+        while ((c = getopt(argc-1, argv+1, "dhp:st:H:S:")) != -1) {
             switch (c) {
             case 'd':
                 args.target = EMULATE_DST;
                 break;
+            case 'p':
+                mig_mon_port = atoi(optarg);
+                break;
             case 's':
                 args.target = EMULATE_SRC;
-                break;
-            case 'S':
-                args.vm_size = atoi(optarg) * (1UL << 30);
                 break;
             case 't':
                 args.tests |= vm_test_parse(optarg);
                 break;
             case 'H':
                 args.src_target_ip = strdup(optarg);
+                break;
+            case 'S':
+                args.vm_size = atoi(optarg) * (1UL << 30);
                 break;
             case 'h':
             default:
