@@ -9,6 +9,46 @@ Features
 
 `mig_mon` provides a few sub-commands to use.
 
+VM Live Migration Network Emulator
+----------------------------------------
+
+This sub-tool can be used to emulate live migration TCP streams.
+
+There're two types of live migration: (1) precopy (2) postcopy.  This tool can
+emulate (1) or (2) or (1+2) case by specifying different '-t' parameters:
+
+  - Enable precopy only: it emulates a TCP_STREAM workload from src->dst
+  - Enable postcopy only: it emulates a TCP_RR workload from dst->src
+  - Enable both: it emulates the above TCP_STREAM+TCP_RR on the same socket
+
+For precopy stream, it's the bandwidth that matters.  The bandwidth
+information will be dumped per-second on src VM.
+
+For postcopy stream, it's the latency that matters.  The average/maximum
+latency value of page requests will be dumped per-second on dst VM.
+
+This sub-command has below parameters:
+
+    ./mig_mon vm [options...]
+      -d:    emulate a dst VM
+      -H:    specify dst VM IP (required for -s)
+      -s:    emulate a src VM
+      -S:    specify size of the VM (GB)
+      -t:    specify tests (precopy, postcopy)
+
+Example usage:
+
+To start the (emulated) destination VM, one can run this on dest host:
+
+    ./mig_mon vm -d
+
+Then, to start a src VM emulation and start both live migration streams,
+one can run this command on src host:
+
+    ./mig_mon vm -s -H $DEST_IP -t precopy -t postcopy
+
+Specifying both '-t' will just enable both migration streams.
+
 Memory Dirty
 --------------
 
