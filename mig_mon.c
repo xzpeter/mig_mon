@@ -165,7 +165,7 @@ void usage(void)
     puts("For detailed usage, please try '-h/--help'.");
     puts("");
     puts("Usage:");
-    printf("       %s [-h|--help]\tshow full help message\n", prog_name);
+    printf("       %s [-h|--help]\tShow full help message\n", prog_name);
     puts("");
     printf("       %s server [spike_log]\n", prog_name);
     printf("       %s client server_ip [interval_ms]\n", prog_name);
@@ -173,18 +173,19 @@ void usage(void)
     printf("       %s client_rr server_ip [interval_ms [spike_log]]\n", prog_name);
     puts("");
     printf("       %s mm_dirty [options...]\n", prog_name);
-    printf("       \t -m: \tmemory size in MB (default: %d)\n", DEF_MM_DIRTY_SIZE);
-    printf("       \t -r: \tdirty rate in MB/s (default: unlimited)\n");
-    printf("       \t -p: \twork pattern: \"sequential\", \"random\", or \"once\"\n");
+    printf("       \t -m: \tMemory size in MB (default: %d)\n", DEF_MM_DIRTY_SIZE);
+    printf("       \t -r: \tDirty rate in MB/s (default: unlimited)\n");
+    printf("       \t -p: \tWork pattern: \"sequential\", \"random\", or \"once\"\n");
     printf("       \t\t(default: \"%s\")\n", pattern_str[DEF_MM_DIRTY_PATTERN]);
-    printf("       \t -P: \tpage size: \"2m\" or \"1g\" for huge pages\n");
+    printf("       \t -P: \tPage size: \"2m\" or \"1g\" for huge pages\n");
     puts("");
     printf("       %s vm [options...]\n", prog_name);
-    printf("       \t -d: \temulate a dst VM\n");
-    printf("       \t -H: \tspecify dst VM IP (required for -s)\n");
-    printf("       \t -s: \temulate a src VM\n");
-    printf("       \t -S: \tspecify size of the VM (GB)\n");
-    printf("       \t -t: \tspecify tests (precopy, postcopy)\n");
+    printf("       \t -d: \tEmulate a dst VM\n");
+    printf("       \t -h: \tDump help message\n");
+    printf("       \t -H: \tSpecify dst VM IP (required for -s)\n");
+    printf("       \t -s: \tEmulate a src VM\n");
+    printf("       \t -S: \tSpecify size of the VM (GB)\n");
+    printf("       \t -t: \tSpecify tests (precopy, postcopy)\n");
     puts("");
 }
 
