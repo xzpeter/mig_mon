@@ -1,5 +1,5 @@
 CFLAGS=-O3 -g -Wall -Werror
-LDFLAGS=-lpthread
+LDLIBS=-lpthread
 
 .PHONY: clean cscope
 
