@@ -739,7 +739,7 @@ static void prefault_memory(unsigned char *buf, unsigned long pages)
     }
 
     if (left) {
-        prefault_range(buf + each * n_cpus, left);
+        prefault_range(buf + each * page_size * n_cpus, left);
     }
 
     for (i = 0; i < n_cpus; i++) {
