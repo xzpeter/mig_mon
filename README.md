@@ -62,7 +62,7 @@ Sub-command "mm_dirty" can generate a constant dirty workload in the system.
               (default: "sequential")
        -P:    page size: "2m" or "1g" for huge pages
 
-To generate a random dirty workload of 500MB/s upon 4GB memory range, we can
+To generate a random dirty workload of 500MB/s upon 2GB memory range, we can
 use:
 
     ./mig_mon mm_dirty -m 2000 -r 500 -p random
