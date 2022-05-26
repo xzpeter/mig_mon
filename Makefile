@@ -3,7 +3,7 @@ LDLIBS=-lpthread
 
 .PHONY: clean cscope
 
-default: mig_mon cscope
+default: mig_mon
 
 cscope:
 	@cscope -bq *.c
