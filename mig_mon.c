@@ -168,6 +168,12 @@ dirty_pattern parse_dirty_pattern(const char *str)
         }
     }
 
+    /* Let's allow some short forms.. */
+    if (!strcmp(str, "seq"))
+        return PATTERN_SEQ;
+    else if (!strcmp(str, "ran"))
+        return PATTERN_RAND;
+
     fprintf(stderr, "Dirty pattern unknown: %s\n", str);
     exit(1);
 }
