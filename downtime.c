@@ -392,3 +392,48 @@ close_sock:
     return ret;
 }
 
+void usage_downtime_short(void)
+{
+    puts("");
+    printf("       %s server [spike_log]\n", prog_name);
+    printf("       %s client server_ip [interval_ms]\n", prog_name);
+    printf("       %s server_rr\n", prog_name);
+    printf("       %s client_rr server_ip [interval_ms [spike_log]]\n", prog_name);
+}
+
+void usage_downtime(void)
+{
+    puts("");
+    puts("Usage:");
+    usage_downtime_short();
+    puts("");
+    puts("======== VM Migration Downtime Measurement ========");
+    puts("");
+    puts("This is a program that could be used to measure");
+    puts("VM migration down time. Please specify work mode.");
+    puts("");
+    puts("Example usage to measure guest server downtime (single way):");
+    puts("");
+    printf("1. [on guest]  start server using '%s server /tmp/spike.log'\n",
+           prog_name);
+    printf("   this will start server, log all spikes into spike.log.\n");
+    printf("2. [on client] start client using '%s client GUEST_IP 50'\n",
+           prog_name);
+    printf("   this starts sending UDP packets to server, interval 50ms.\n");
+    printf("3. trigger loop migration (e.g., 100 times)\n");
+    printf("4. see the results on server side.\n");
+    puts("");
+    puts("Example usage to measure round-trip downtime:");
+    puts("(This is preferred since it simulates a simplest server behavior)");
+    puts("");
+    printf("1. [on guest]  start server using '%s server_rr'\n",
+           prog_name);
+    printf("   this will start a UDP echo server.\n");
+    printf("2. [on client] start client using '%s client GUEST_IP 50 spike.log'\n",
+           prog_name);
+    printf("   this starts sending UDP packets to server, then try to recv it.\n");
+    printf("   the timeout of recv() will be 50ms.\n");
+    printf("3. trigger loop migration (e.g., 100 times)\n");
+    printf("4. see the results on client side.\n");
+    puts("");
+}

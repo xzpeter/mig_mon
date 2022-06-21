@@ -626,3 +626,51 @@ int mon_vm(vm_args *args)
 
     return ret;
 }
+
+void usage_vm_short(void)
+{
+    puts("");
+    printf("       %s vm [options...]\n", prog_name);
+    printf("       \t -d: \tEmulate a dst VM\n");
+    printf("       \t -h: \tDump help message for vm sub-cmd\n");
+    printf("       \t -H: \tSpecify dst VM IP (required for -s)\n");
+    printf("       \t -p: \tSpecify connect/listen port\n");
+    printf("       \t -s: \tEmulate a src VM\n");
+    printf("       \t -S: \tSpecify size of the VM (GB)\n");
+    printf("       \t -t: \tSpecify tests (precopy, postcopy)\n");
+}
+
+void usage_vm(void)
+{
+    puts("");
+    puts("Usage:");
+    usage_vm_short();
+    puts("");
+    puts("======== Emulate VM Live Migrations ========");
+    puts("");
+    puts("This sub-tool can be used to emulate live migration TCP streams.");
+    puts("");
+    puts("There're two types of live migration: (1) precopy (2) postcopy.");
+    puts("This tool can emulate (1) or (2) or (1+2) case by specifying");
+    puts("different '-t' parameters.");
+    puts("");
+    puts("For precopy stream, it's the bandwidth that matters.  The bandwidth");
+    puts("information will be dumped per-second on src VM.");
+    puts("");
+    puts("For postcopy stream, it's the latency that matters.  The average/maximum");
+    puts("latency value of page requests will be dumped per-second on dst VM.");
+    puts("");
+    puts("Example:");
+    puts("");
+    puts("To start the (emulated) destination VM, one can run this on dest host:");
+    puts("");
+    printf("  %s vm -d\n", prog_name);
+    puts("");
+    puts("Then, to start a src VM emulation and start both live migration streams,");
+    puts("one can run this command on src host:");
+    puts("");
+    printf("  %s vm -s -H $DEST_IP -t precopy -t postcopy\n", prog_name);
+    puts("");
+    puts("Specifying both '-t' will just enable both migration streams.");
+    puts("");
+}

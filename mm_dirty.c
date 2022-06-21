@@ -176,3 +176,35 @@ int mon_mm_dirty(mm_dirty_args *args)
     /* Never reached */
     return 0;
 }
+
+void usage_mm_dirty_short(void)
+{
+    puts("");
+    printf("       %s mm_dirty [options...]\n", prog_name);
+    printf("       \t -h: \tDump help message for mm_dirty sub-cmd\n");
+    printf("       \t -m: \tMemory size in MB (default: %d)\n", DEF_MM_DIRTY_SIZE);
+    printf("       \t -r: \tDirty rate in MB/s (default: unlimited)\n");
+    printf("       \t -p: \tWork pattern: \"sequential\", \"random\", or \"once\"\n");
+    printf("       \t\t(default: \"%s\")\n", pattern_str[DEF_MM_DIRTY_PATTERN]);
+    printf("       \t -P: \tPage size: \"2m\" or \"1g\" for huge pages\n");
+}
+
+void usage_mm_dirty(void)
+{
+    puts("");
+    puts("Usage:");
+    usage_mm_dirty_short();
+    puts("");
+    puts("======== Memory Dirty Workload ========");
+    puts("");
+    puts("This sub-tool can also generate dirty memory workload in different ways.");
+    puts("");
+    puts("Example 1: generate 500MB/s random dirty workload upon 200GB memory using:");
+    puts("");
+    printf("  %s mm_dirty -m 200000 -r 500 -p random\n", prog_name);
+    puts("");
+    puts("Example 2: dirty 10GB memory then keep idle after dirtying:");
+    puts("");
+    printf("  %s mm_dirty -m 10000 -p once\n", prog_name);
+    puts("");
+}
