@@ -59,6 +59,9 @@ typedef enum {
  * For mig_mon.c  *
  ******************/
 extern short mig_mon_port;
+extern long n_cpus;
+extern long page_size, huge_page_size;
+extern const char *pattern_str[PATTERN_NUM];
 
 /******************
  * For downtime.c *
@@ -75,5 +78,11 @@ int mon_client_callback(int sock, int spike_fd, int interval_ms);
 int mon_client_rr_callback(int sock, int spike_fd, int interval_ms);
 int mon_client(const char *server_ip, int interval_ms,
                const char *spike_log, mon_client_cbk client_callback);
+
+/******************
+ * For mm_dirty.c *
+ ******************/
+int mon_mm_dirty(long mm_size, long dirty_rate, dirty_pattern pattern,
+                 unsigned int map_flags);
 
 #endif
