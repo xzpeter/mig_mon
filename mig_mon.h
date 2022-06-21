@@ -82,9 +82,17 @@ int mon_client(const char *server_ip, int interval_ms,
 /******************
  * For mm_dirty.c *
  ******************/
-int mon_mm_dirty(long mm_size, long dirty_rate, dirty_pattern pattern,
-                 unsigned int map_flags);
-
+typedef struct {
+    /* Size of the memory to test on */
+    long mm_size;
+    /* Dirty rate (in MB/s) */
+    long dirty_rate;
+    /* mmap() flags to pass over */
+    int map_flags;
+    /* Dirty pattern */
+    dirty_pattern pattern;
+} mm_dirty_args;
+int mon_mm_dirty(mm_dirty_args *args);
 
 /**************
  * For vm.c   *

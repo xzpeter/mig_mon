@@ -280,24 +280,27 @@ int main(int argc, char *argv[])
 
         ret = mon_vm(&args);
     } else if (!strcmp(work_mode, "mm_dirty")) {
-        long dirty_rate = 0, mm_size = DEF_MM_DIRTY_SIZE;
-        dirty_pattern pattern = DEF_MM_DIRTY_PATTERN;
-        int map_flags = MAP_ANONYMOUS | MAP_PRIVATE;
+        mm_dirty_args args = {
+            .dirty_rate = 0,
+            .mm_size = DEF_MM_DIRTY_SIZE,
+            .pattern = DEF_MM_DIRTY_PATTERN,
+            .map_flags = MAP_ANONYMOUS | MAP_PRIVATE,
+        };
         int c;
 
         while ((c = getopt(argc-1, argv+1, "hm:p:P:r:")) != -1) {
             switch (c) {
             case 'm':
-                mm_size = atol(optarg);
+                args.mm_size = atol(optarg);
                 break;
             case 'r':
-                dirty_rate = atol(optarg);
+                args.dirty_rate = atol(optarg);
                 break;
             case 'p':
-                pattern = parse_dirty_pattern(optarg);
+                args.pattern = parse_dirty_pattern(optarg);
                 break;
             case 'P':
-                map_flags |= parse_huge_page_size(optarg);
+                args.map_flags |= parse_huge_page_size(optarg);
                 break;
             case 'h':
             default:
@@ -317,7 +320,7 @@ int main(int argc, char *argv[])
             return -1;
         }
 
-        ret = mon_mm_dirty(mm_size, dirty_rate, pattern, map_flags);
+        ret = mon_mm_dirty(&args);
     } else {
         usage();
         return -1;

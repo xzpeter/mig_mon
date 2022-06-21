@@ -63,8 +63,7 @@ static void prefault_memory(unsigned char *buf, unsigned long pages)
     printf("done\n");
 }
 
-int mon_mm_dirty(long mm_size, long dirty_rate, dirty_pattern pattern,
-                 unsigned int map_flags)
+int mon_mm_dirty(mm_dirty_args *args)
 {
     unsigned char *mm_ptr, *mm_buf, *mm_end;
     /*
@@ -76,6 +75,10 @@ int mon_mm_dirty(long mm_size, long dirty_rate, dirty_pattern pattern,
     uint64_t time_iter, time_now;
     uint64_t sleep_ms = 0, elapsed_ms;
     unsigned long dirtied_mb = 0, mm_npages;
+    dirty_pattern pattern = args->pattern;
+    unsigned int map_flags = args->map_flags;
+    long dirty_rate = args->dirty_rate;
+    long mm_size = args->mm_size;
     float speed;
     int i;
 
