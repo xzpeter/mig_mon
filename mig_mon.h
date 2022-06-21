@@ -85,4 +85,78 @@ int mon_client(const char *server_ip, int interval_ms,
 int mon_mm_dirty(long mm_size, long dirty_rate, dirty_pattern pattern,
                  unsigned int map_flags);
 
+
+/**************
+ * For vm.c   *
+ **************/
+
+/* If set, will generate precopy live migration stream */
+#define  VM_TEST_PRECOPY     (1UL << 0)
+/* If set, will generate postcopy page requests */
+#define  VM_TEST_POSTCOPY    (1UL << 1)
+
+#define  DEF_VM_SIZE              (1UL << 40)  /* 1TB */
+
+typedef enum {
+    EMULATE_NONE = 0,
+    EMULATE_SRC = 1,
+    EMULATE_DST = 2,
+    EMULATE_NUM,
+} emulate_target;
+
+typedef struct {
+    int sock;
+    emulate_target target;
+    unsigned int tests;
+    /* Whether we should quit */
+    int quit;
+    /* Guest memory size (emulated) */
+    uint64_t vm_size;
+    /*
+     * Both the src/dst VMs have these threads, even if they do not mean the
+     * same workload will be run, we share the fields.
+     */
+    pthread_t sender;
+    pthread_t receiver;
+
+    /*
+     * Maintaining receiving sockets
+     */
+    /* Size = DEF_IO_BUF_SIZE */
+    char *recv_buffer;
+    /* Length of data consumed */
+    int recv_cur;
+    /* Length of data in recv_buffer */
+    int recv_len;
+
+    /*
+     * When on src: used to emulate page req queue.
+     * When on dst: used to notify when a page req is resolved.
+     *
+     * Data is page offset (u64), always.
+     */
+    int page_req_pipe[2];
+
+    union {
+        /* Only needed on src VM */
+        struct {
+            /* Size = MAX_IOV_SIZE * DEF_IO_BUF_SIZE */
+            struct iovec *src_iov_buffer;
+            /* Dest VM ip */
+            const char *src_target_ip;
+            /* Points to the current IOV being used */
+            int src_cur;
+            /* Length of current IOV that has been consumed */
+            size_t src_cur_len;
+        };
+        /* Only needed on dst VM */
+        struct {
+            /* Current page to request */
+            uint64_t dst_current_req;
+        };
+    };
+} vm_args;
+
+int mon_vm(vm_args *args);
+
 #endif
