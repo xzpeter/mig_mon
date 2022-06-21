@@ -8,6 +8,7 @@ void fd_write(int fd, void *buffer, size_t size);
 void fd_read(int fd, void *buffer, size_t size);
 void socket_set_fast_reuse(int fd);
 void pthread_set_name(pthread_t thread, const char *name);
+unsigned long parse_size_to_mega(const char *str);
 
 static inline uint64_t get_usec(void)
 {

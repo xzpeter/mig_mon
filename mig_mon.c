@@ -322,10 +322,10 @@ int main(int argc, char *argv[])
         while ((c = getopt(argc-1, argv+1, "hm:p:P:r:")) != -1) {
             switch (c) {
             case 'm':
-                args.mm_size = atol(optarg);
+                args.mm_size = parse_size_to_mega(optarg);
                 break;
             case 'r':
-                args.dirty_rate = atol(optarg);
+                args.dirty_rate = parse_size_to_mega(optarg);
                 break;
             case 'p':
                 args.pattern = parse_dirty_pattern(optarg);

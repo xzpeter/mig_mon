@@ -47,3 +47,35 @@ void pthread_set_name(pthread_t thread, const char *name)
     assert(ret == 0);
 #endif
 }
+
+/* Parse some number like "2G", if no unit, using "M" by default. */
+unsigned long parse_size_to_mega(const char *str)
+{
+    unsigned long value, n = 1;
+    char *endptr;
+
+    value = strtoul(str, &endptr, 10);
+    if (value == 0 || endptr == NULL) {
+        printf("Unknown size string: '%s'\n", str);
+        exit(-1);
+    }
+
+    switch (*endptr) {
+    case 't':
+    case 'T':
+        n *= 1024;
+    case 'g':
+    case 'G':
+        n *= 1024;
+    case 'm':
+    case 'M':
+    case '\0': /* This means, no unit, so MB by default */
+        break;
+    default:
+        printf("Unknown unit '%c', try something else (MB/GB/...)\n", *endptr);
+        exit(-1);
+        break;
+    }
+
+    return value * n;
+}
