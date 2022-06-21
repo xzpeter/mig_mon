@@ -199,12 +199,12 @@ void usage_mm_dirty(void)
     puts("");
     puts("This sub-tool can also generate dirty memory workload in different ways.");
     puts("");
-    puts("Example 1: generate 500MB/s random dirty workload upon 200GB memory using:");
+    puts("Example 1: generate 100MB/s random dirty workload upon 500MB memory using:");
     puts("");
-    printf("  %s mm_dirty -m 200000 -r 500 -p random\n", prog_name);
+    printf("  %s mm_dirty -m 500M -r 100M -p random\n", prog_name);
     puts("");
     puts("Example 2: dirty 10GB memory then keep idle after dirtying:");
     puts("");
-    printf("  %s mm_dirty -m 10000 -p once\n", prog_name);
+    printf("  %s mm_dirty -m 10G -p once\n", prog_name);
     puts("");
 }
