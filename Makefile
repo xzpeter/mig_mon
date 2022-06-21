@@ -8,7 +8,7 @@ default: mig_mon
 cscope:
 	@cscope -bq *.c
 
-mig_mon: mig_mon.o
+mig_mon: mig_mon.o utils.o
 
 clean:
 	@rm -rf *.o mig_mon cscope*

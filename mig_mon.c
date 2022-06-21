@@ -1,58 +1,6 @@
-#ifdef __linux__
-#define _GNU_SOURCE
-#endif
+#include "mig_mon.h"
 
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <time.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <pthread.h>
-
-#ifdef __linux__
-#include <linux/mman.h>
-#endif
-
-#define  MAX(a, b)  ((a > b) ? (a) : (b))
-#define  MIN(a, b)  ((a < b) ? (a) : (b))
-
-#ifdef DEBUG
-#define  debug(...)  printf(__VA_ARGS__)
-#else
-#define  debug(...)
-#endif
-
-typedef enum {
-    PATTERN_SEQ = 0,
-    PATTERN_RAND = 1,
-    PATTERN_ONCE = 2,
-    PATTERN_NUM,
-} dirty_pattern;
-
-#define  VERSION  "v0.2.2"
-
-char *pattern_str[PATTERN_NUM] = { "sequential", "random", "once" };
-
-/* whether allow client change its IP */
-#define  MIG_MON_SINGLE_CLIENT       (0)
-#define  MIG_MON_PORT                (12323)
-#define  MIG_MON_INT_DEF             (1000)
-#define  BUF_LEN                     (1024)
-#define  MIG_MON_SPIKE_LOG_DEF       ("/tmp/spike.log")
-#define  DEF_MM_DIRTY_SIZE           (512)
-#define  DEF_MM_DIRTY_PATTERN        PATTERN_SEQ
-
+static const char *pattern_str[PATTERN_NUM] = { "sequential", "random", "once" };
 static const char *prog_name = NULL;
 static long n_cpus;
 static short mig_mon_port = MIG_MON_PORT;
@@ -62,14 +10,6 @@ static short mig_mon_port = MIG_MON_PORT;
  * hypervisor will track dirty.
  */
 static long page_size, huge_page_size;
-
-void pthread_set_name(pthread_t thread, const char *name)
-{
-#ifdef __linux__
-    int ret = pthread_setname_np(thread, name);
-    assert(ret == 0);
-#endif
-}
 
 void usage_downtime(void)
 {
@@ -154,7 +94,7 @@ void usage_vm(void)
 
 void version(void)
 {
-    printf("Version: %s\n", VERSION);
+    printf("Version: %s\n", MIG_MON_VERSION);
     puts("");
 }
 
@@ -190,46 +130,6 @@ void usage(void)
     puts("");
 }
 
-/* Return 0 when succeed, 1 for retry, assert on error */
-void fd_write(int fd, void *buffer, size_t size)
-{
-    int ret;
-
-retry:
-    ret = write(fd, buffer, size);
-    if (ret < 0)
-        ret = -errno;
-    if (ret == -EAGAIN || ret == -EINTR)
-        goto retry;
-
-    assert(ret == size);
-}
-
-/* Return 0 when succeed, 1 for retry, assert on error */
-void fd_read(int fd, void *buffer, size_t size)
-{
-    int ret;
-
-retry:
-    ret = read(fd, buffer, size);
-    if (ret < 0)
-        ret = -errno;
-    if (ret == -EAGAIN || ret == -EINTR)
-        goto retry;
-
-    assert(ret == size);
-}
-
-void socket_set_fast_reuse(int fd)
-{
-    int val = 1, ret;
-
-    ret = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
-                     (const char *)&val, sizeof(val));
-
-    assert(ret == 0);
-}
-
 dirty_pattern parse_dirty_pattern(const char *str)
 {
     int i;
@@ -263,31 +163,6 @@ int parse_huge_page_size(const char *size)
     printf("Specify page size is not supported on non-Linux arch yet.\n");
     exit(1);
 #endif
-}
-
-uint64_t get_usec(void)
-{
-    uint64_t val = 0;
-    struct timespec t;
-    int ret = clock_gettime(CLOCK_MONOTONIC, &t);
-    if (ret == -1) {
-        perror("clock_gettime() failed");
-        /* should never happen */
-        exit(-1);
-    }
-    val = t.tv_nsec / 1000;     /* ns -> us */
-    val += t.tv_sec * 1000000;  /* s -> us */
-    return val;
-}
-
-uint64_t get_msec(void)
-{
-    return get_usec() / 1000;
-}
-
-uint64_t get_timestamp(void)
-{
-    return (uint64_t)time(NULL);
 }
 
 void write_spike_log(int fd, uint64_t delay)
@@ -772,7 +647,7 @@ int mon_mm_dirty(long mm_size, long dirty_rate, dirty_pattern pattern,
         return -1;
     }
 
-    printf("Binary version: \t%s\n", VERSION);
+    printf("Binary version: \t%s\n", MIG_MON_VERSION);
     printf("Test memory size: \t%ld (MB)\n", mm_size);
     printf("Backend page size: \t%ld (Bytes)\n", huge_page_size);
     printf("Dirty step size: \t%ld (Bytes)\n", page_size);
