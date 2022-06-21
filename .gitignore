@@ -1,4 +1,4 @@
 mig_mon
-mig_mon.o
+*.o
 cscope*
 push.sh

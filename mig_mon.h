@@ -55,4 +55,25 @@ typedef enum {
 #define  DEF_MM_DIRTY_SIZE           (512)
 #define  DEF_MM_DIRTY_PATTERN        PATTERN_SEQ
 
+/******************
+ * For mig_mon.c  *
+ ******************/
+extern short mig_mon_port;
+
+/******************
+ * For downtime.c *
+ ******************/
+
+/* Mig_mon callbacks. Return 0 for continue, non-zero for errors. */
+typedef int (*mon_server_cbk)(int sock, int spike_fd);
+typedef int (*mon_client_cbk)(int sock, int spike_fd, int interval_ms);
+
+int mon_server_callback(int sock, int spike_fd);
+int mon_server_rr_callback(int sock, int spike_fd);
+int mon_server(const char *spike_log, mon_server_cbk server_callback);
+int mon_client_callback(int sock, int spike_fd, int interval_ms);
+int mon_client_rr_callback(int sock, int spike_fd, int interval_ms);
+int mon_client(const char *server_ip, int interval_ms,
+               const char *spike_log, mon_client_cbk client_callback);
+
 #endif
