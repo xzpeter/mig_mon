@@ -12,8 +12,45 @@ short mig_mon_port = MIG_MON_PORT;
 long page_size, huge_page_size;
 const char *pattern_str[PATTERN_NUM] = { "sequential", "random", "once" };
 
+void usage_downtime_short(void)
+{
+    puts("");
+    printf("       %s server [spike_log]\n", prog_name);
+    printf("       %s client server_ip [interval_ms]\n", prog_name);
+    printf("       %s server_rr\n", prog_name);
+    printf("       %s client_rr server_ip [interval_ms [spike_log]]\n", prog_name);
+}
+
+void usage_mm_dirty_short(void)
+{
+    puts("");
+    printf("       %s mm_dirty [options...]\n", prog_name);
+    printf("       \t -h: \tDump help message for mm_dirty sub-cmd\n");
+    printf("       \t -m: \tMemory size in MB (default: %d)\n", DEF_MM_DIRTY_SIZE);
+    printf("       \t -r: \tDirty rate in MB/s (default: unlimited)\n");
+    printf("       \t -p: \tWork pattern: \"sequential\", \"random\", or \"once\"\n");
+    printf("       \t\t(default: \"%s\")\n", pattern_str[DEF_MM_DIRTY_PATTERN]);
+    printf("       \t -P: \tPage size: \"2m\" or \"1g\" for huge pages\n");
+}
+
+void usage_vm_short(void)
+{
+    puts("");
+    printf("       %s vm [options...]\n", prog_name);
+    printf("       \t -d: \tEmulate a dst VM\n");
+    printf("       \t -h: \tDump help message for vm sub-cmd\n");
+    printf("       \t -H: \tSpecify dst VM IP (required for -s)\n");
+    printf("       \t -p: \tSpecify connect/listen port\n");
+    printf("       \t -s: \tEmulate a src VM\n");
+    printf("       \t -S: \tSpecify size of the VM (GB)\n");
+    printf("       \t -t: \tSpecify tests (precopy, postcopy)\n");
+}
+
 void usage_downtime(void)
 {
+    puts("");
+    puts("Usage:");
+    usage_downtime_short();
     puts("");
     puts("======== VM Migration Downtime Measurement ========");
     puts("");
@@ -48,6 +85,10 @@ void usage_downtime(void)
 
 void usage_mm_dirty(void)
 {
+    puts("");
+    puts("Usage:");
+    usage_mm_dirty_short();
+    puts("");
     puts("======== Memory Dirty Workload ========");
     puts("");
     puts("This sub-tool can also generate dirty memory workload in different ways.");
@@ -64,6 +105,10 @@ void usage_mm_dirty(void)
 
 void usage_vm(void)
 {
+    puts("");
+    puts("Usage:");
+    usage_vm_short();
+    puts("");
     puts("======== Emulate VM Live Migrations ========");
     puts("");
     puts("This sub-tool can be used to emulate live migration TCP streams.");
@@ -103,31 +148,13 @@ void usage(void)
 {
     puts("");
     puts("This tool is a toolset of VM live migration testing & debugging.");
-    puts("For detailed usage, please try '-h/--help'.");
+    puts("For detailed usage, please try '-h/--help' for each sub-command.");
     puts("");
     puts("Usage:");
     printf("       %s [-h|--help]\tShow full help message\n", prog_name);
-    puts("");
-    printf("       %s server [spike_log]\n", prog_name);
-    printf("       %s client server_ip [interval_ms]\n", prog_name);
-    printf("       %s server_rr\n", prog_name);
-    printf("       %s client_rr server_ip [interval_ms [spike_log]]\n", prog_name);
-    puts("");
-    printf("       %s mm_dirty [options...]\n", prog_name);
-    printf("       \t -m: \tMemory size in MB (default: %d)\n", DEF_MM_DIRTY_SIZE);
-    printf("       \t -r: \tDirty rate in MB/s (default: unlimited)\n");
-    printf("       \t -p: \tWork pattern: \"sequential\", \"random\", or \"once\"\n");
-    printf("       \t\t(default: \"%s\")\n", pattern_str[DEF_MM_DIRTY_PATTERN]);
-    printf("       \t -P: \tPage size: \"2m\" or \"1g\" for huge pages\n");
-    puts("");
-    printf("       %s vm [options...]\n", prog_name);
-    printf("       \t -d: \tEmulate a dst VM\n");
-    printf("       \t -h: \tDump help message\n");
-    printf("       \t -H: \tSpecify dst VM IP (required for -s)\n");
-    printf("       \t -p: \tSpecify connect/listen port\n");
-    printf("       \t -s: \tEmulate a src VM\n");
-    printf("       \t -S: \tSpecify size of the VM (GB)\n");
-    printf("       \t -t: \tSpecify tests (precopy, postcopy)\n");
+    usage_downtime_short();
+    usage_mm_dirty_short();
+    usage_vm_short();
     puts("");
 }
 
@@ -200,7 +227,6 @@ int main(int argc, char *argv[])
     work_mode = argv[1];
 
     if (!strcmp(work_mode, "-h") || !strcmp(work_mode, "--help")) {
-        usage();
         usage_downtime();
         usage_mm_dirty();
         usage_vm();
@@ -216,7 +242,7 @@ int main(int argc, char *argv[])
         ret = mon_server(spike_log, mon_server_callback);
     } else if (!strcmp(work_mode, "client")) {
         if (argc < 3) {
-            usage();
+            usage_downtime();
             return -1;
         }
         server_ip = argv[2];
@@ -231,7 +257,7 @@ int main(int argc, char *argv[])
         ret = mon_server(NULL, mon_server_rr_callback);
     } else if (!strcmp(work_mode, "client_rr")) {
         if (argc < 3) {
-            usage();
+            usage_downtime();
             return -1;
         }
         server_ip = argv[2];
@@ -272,7 +298,6 @@ int main(int argc, char *argv[])
                 break;
             case 'h':
             default:
-                usage();
                 usage_vm();
                 return -1;
             }
@@ -304,7 +329,6 @@ int main(int argc, char *argv[])
                 break;
             case 'h':
             default:
-                usage();
                 usage_mm_dirty();
                 return -1;
             }
@@ -316,7 +340,7 @@ int main(int argc, char *argv[])
          */
         if (optind != argc-1) {
             printf("Unknown extra parameters detected.\n");
-            usage();
+            usage_mm_dirty();
             return -1;
         }
 
