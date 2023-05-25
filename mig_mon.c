@@ -189,10 +189,11 @@ int main(int argc, char *argv[])
             .mm_size = DEF_MM_DIRTY_SIZE,
             .pattern = DEF_MM_DIRTY_PATTERN,
             .map_flags = MAP_ANONYMOUS | MAP_PRIVATE,
+            .record_latencies = false,
         };
         int c;
 
-        while ((c = getopt(argc-1, argv+1, "hm:p:P:r:")) != -1) {
+        while ((c = getopt(argc-1, argv+1, "hLm:p:P:r:")) != -1) {
             switch (c) {
             case 'm':
                 args.mm_size = parse_size_to_mega(optarg);
@@ -202,6 +203,9 @@ int main(int argc, char *argv[])
                 break;
             case 'p':
                 args.pattern = parse_dirty_pattern(optarg);
+                break;
+            case 'L':
+                args.record_latencies = true;
                 break;
             case 'P':
                 args.map_flags |= parse_huge_page_size(optarg);

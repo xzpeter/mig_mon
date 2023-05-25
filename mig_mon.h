@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <pthread.h>
+#include <stdbool.h>
 
 #ifdef __linux__
 #include <linux/mman.h>
@@ -94,6 +95,8 @@ typedef struct {
     int map_flags;
     /* Dirty pattern */
     dirty_pattern pattern;
+    /* Whether we're recording the memory access latencies */
+    bool record_latencies;
 } mm_dirty_args;
 int mon_mm_dirty(mm_dirty_args *args);
 void usage_mm_dirty_short(void);

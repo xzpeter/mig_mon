@@ -1,4 +1,5 @@
 #include "mig_mon.h"
+#include <signal.h>
 
 #define N_1M (1024 * 1024)
 
@@ -63,6 +64,25 @@ static void prefault_memory(unsigned char *buf, unsigned long pages)
     printf("done\n");
 }
 
+static bool record_latencies;
+/* 1us, 2us, 4us, ..., 1024us, 2048us, ..., 1048576us */
+#define  BUCKET_SIZE  21
+static uint64_t ts_bucket[BUCKET_SIZE];
+
+static void mm_dirty_sig_handler(int sig)
+{
+    if (record_latencies) {
+        unsigned int i, n = BUCKET_SIZE;
+
+        puts("\nMemory Latencies:\n");
+        for (i = 0; i < n; i++) {
+            printf("%12u (us): %lu\n", 1<<i, ts_bucket[i]);
+        }
+        puts("");
+    }
+    exit(0);
+}
+
 int mon_mm_dirty(mm_dirty_args *args)
 {
     unsigned char *mm_ptr, *mm_buf, *mm_end;
@@ -74,13 +94,21 @@ int mon_mm_dirty(mm_dirty_args *args)
     long pages_per_mb = N_1M / page_size;
     uint64_t time_iter, time_now;
     uint64_t sleep_ms = 0, elapsed_ms;
+    uint64_t ts_start = 0, ts_lat;
     unsigned long dirtied_mb = 0, mm_npages;
     dirty_pattern pattern = args->pattern;
     unsigned int map_flags = args->map_flags;
     long dirty_rate = args->dirty_rate;
     long mm_size = args->mm_size;
+    struct sigaction sigact = { 0 };
     float speed;
     int i;
+
+    record_latencies = args->record_latencies;
+
+    sigact.sa_handler = mm_dirty_sig_handler;
+    sigaction(SIGTERM, &sigact, NULL);
+    sigaction(SIGINT, &sigact, NULL);
 
     mm_buf = mmap(NULL, mm_size * N_1M, PROT_READ | PROT_WRITE,
                   map_flags, -1, 0);
@@ -99,6 +127,7 @@ int mon_mm_dirty(mm_dirty_args *args)
         printf("Dirty memory rate: \tMaximum\n");
     }
     printf("Dirty pattern: \t\t%s\n", pattern_str[pattern]);
+    printf("Recording latencies: \t%s\n", record_latencies ? "yes" : "no");
 
     mm_ptr = mm_buf;
     mm_end = mm_buf + mm_size * N_1M;
@@ -124,6 +153,8 @@ int mon_mm_dirty(mm_dirty_args *args)
     while (1) {
         /* Dirty in MB unit */
         for (i = 0; i < pages_per_mb; i++) {
+            if (record_latencies)
+                ts_start = get_usec();
             if (pattern == PATTERN_SEQ) {
                 /* Validate memory if not the first round */
                 unsigned char target = cur_val - 1;
@@ -142,6 +173,23 @@ int mon_mm_dirty(mm_dirty_args *args)
                 *(mm_buf + rand * page_size) = cur_val++;
             } else {
                 assert(0);
+            }
+            if (record_latencies) {
+                unsigned int index;
+
+                ts_lat = get_usec() - ts_start;
+                /*
+                 * This puts the latency value into the bucket with index.
+                 * E.g., 3us will be put into <4us bucket (index=2).  So
+                 * it's not really accurate but just to show a pattern of
+                 * the latencies.
+                 *
+                 * If it goes over 1sec, always put into 1sec bucket.
+                 */
+                index = ffsl(ts_lat);
+                if (index > (sizeof(ts_bucket) - 1))
+                    index = (sizeof(ts_bucket) - 1);
+                ts_bucket[index]++;
             }
         }
         if (pattern == PATTERN_SEQ && mm_ptr + N_1M > mm_end) {
@@ -186,6 +234,7 @@ void usage_mm_dirty_short(void)
     printf("       \t -r: \tDirty rate in MB/s (default: unlimited)\n");
     printf("       \t -p: \tWork pattern: \"sequential\", \"random\", or \"once\"\n");
     printf("       \t\t(default: \"%s\")\n", pattern_str[DEF_MM_DIRTY_PATTERN]);
+    printf("       \t -L: \tRecord and report memory access latencies\n");
     printf("       \t -P: \tPage size: \"2m\" or \"1g\" for huge pages\n");
 }
 
@@ -206,5 +255,9 @@ void usage_mm_dirty(void)
     puts("Example 2: dirty 10GB memory then keep idle after dirtying:");
     puts("");
     printf("  %s mm_dirty -m 10G -p once\n", prog_name);
+    puts("");
+    puts("Example 3: dirty 1GB memory, record and report memory access latencies when quit:");
+    puts("");
+    printf("  %s mm_dirty -m 10G -L\n", prog_name);
     puts("");
 }
