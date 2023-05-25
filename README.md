@@ -56,11 +56,13 @@ Memory Dirty
 Sub-command "mm_dirty" can generate a constant dirty workload in the system.
 
     ./mig_mon mm_dirty [options...]
-       -m:    memory size in MB (default: 512)
-       -r:    dirty rate in MB/s (default: unlimited)
-       -p:    work pattern: "sequential", "random", or "once"
-              (default: "sequential")
-       -P:    page size: "2m" or "1g" for huge pages
+      -h:    Dump help message for mm_dirty sub-cmd
+      -m:    Memory size in MB (default: 512)
+      -r:    Dirty rate in MB/s (default: unlimited)
+      -p:    Work pattern: "sequential", "random", or "once"
+             (default: "sequential")
+      -L:    Record and report memory access latencies
+      -P:    Page size: "2m" or "1g" for huge pages
 
 To generate a random dirty workload of 500MB/s upon 2GB memory range, we can
 use:
@@ -71,6 +73,53 @@ The dirty workload will always dirty pages in 4K page size (even if huge pages
 are used) because normally hypervisor will trap dirty in small page size always.
 
 Pre-heat will be done before starting the real workload.
+
+### Memory Access Latency Measurement
+
+*mm_dirty* can also support measuring memory access latencies during
+writing to memory.  It's mostly useful when e.g. there's a potential reason
+for high memory access latency (e.g. the VM is during a postcopy live
+migration), then we can get a distribution of memory access latencies for
+the whole process.
+
+To record and report memory access latencies, simply attach parameter *-L*
+to the *mm_dirty* command.  Below is an example to start sequential writes
+upon 16GB memory, measure / report memory access latencies:
+
+    ./mig_mon mm_dirty -m 16G -L
+
+The result (on a bare metal host) can look like this:
+
+            1 (us): 23372101
+            2 (us): 2399961
+            4 (us): 2168
+            8 (us): 1454
+           16 (us): 76
+           32 (us): 5
+           64 (us): 0
+          128 (us): 0
+          256 (us): 0
+          512 (us): 0
+         1024 (us): 0
+         2048 (us): 0
+         4096 (us): 0
+         8192 (us): 0
+        16384 (us): 0
+        32768 (us): 0
+        65536 (us): 0
+       131072 (us): 0
+       262144 (us): 0
+       524288 (us): 0
+      1048576 (us): 0
+
+Note that there're 21 buckets, each of the bucket is a power-of-2.  For
+example, the number showed in bucket *8 (us)* means there are 1454 memory
+accesses that took *no more than 8 microseconds* to finish (but larger than
+*4us* or it'll have fallen into the previous bucket).  Same applies to the
+rest buckets.
+
+Here only the last bucket is special: anything bigger than 1sec will be put
+there.
 
 Network Downtime Measurement
 ---------------------------------
