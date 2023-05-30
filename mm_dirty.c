@@ -186,7 +186,11 @@ int mon_mm_dirty(mm_dirty_args *args)
                  *
                  * If it goes over 1sec, always put into 1sec bucket.
                  */
-                index = ffsl(ts_lat);
+                if (ts_lat == 0)
+                    index = 0;
+                else
+                    index = 64 - __builtin_clzll(ts_lat);
+                printf("latency: %lu, index: %d\n", ts_lat, index);
                 if (index > (sizeof(ts_bucket) - 1))
                     index = (sizeof(ts_bucket) - 1);
                 ts_bucket[index]++;
