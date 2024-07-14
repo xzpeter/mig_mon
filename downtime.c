@@ -27,8 +27,13 @@ static void write_spike_log(int fd, uint64_t delay)
 
 static int socket_set_timeout(int sock, int timeout_ms)
 {
+    struct timeval tv = {
+        .tv_sec = timeout_ms / 1000,
+        .tv_usec = (timeout_ms % 1000) * 1000
+    };
+
     return setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,
-                      (void *)&timeout_ms, sizeof(int));
+                      (void *)&tv, sizeof(int));
 }
 
 /*
