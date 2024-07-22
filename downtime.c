@@ -33,7 +33,7 @@ static int socket_set_timeout(int sock, int timeout_ms)
     };
 
     return setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,
-                      (void *)&tv, sizeof(int));
+                      (void *)&tv, sizeof(tv));
 }
 
 /*
@@ -336,7 +336,7 @@ int mon_client_rr_callback(int sock, int spike_fd, int interval_ms)
 
     ret = recvfrom(sock, buf, msg_len, 0, NULL, 0);
     if (ret == -1) {
-        if (errno == ECONNREFUSED) {
+        if (errno == ECONNREFUSED || errno == EAGAIN) {
             /*
              * This is when server is down, e.g., due to migration. So
              * this is okay.
