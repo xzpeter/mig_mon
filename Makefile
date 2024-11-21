@@ -1,14 +1,15 @@
-CFLAGS=-O3 -g -Wall -Werror
-LDLIBS=-lpthread
+.PHONY: default clean cscope
 
-.PHONY: clean cscope
-
-default: mig_mon
+default:
+	# optimization=3  => -O3
+	# debug=true      => -g
+	# warning_level=3 => -Wall
+	# werror=true     => -Werror
+	@meson setup build -Doptimization=3 -Ddebug=true -Dwarning_level=3 -Dwerror=true
+	@cd build && meson compile
 
 cscope:
 	@cscope -bq *.c
 
-mig_mon: mig_mon.o utils.o downtime.o mm_dirty.o vm.o
-
 clean:
-	@rm -rf *.o mig_mon cscope*
+	@rm -rf build/ cscope*

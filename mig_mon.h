@@ -28,7 +28,6 @@
 #include <linux/mman.h>
 #endif
 
-#include "version.h"
 #include "utils.h"
 
 #define  MAX(a, b)  ((a > b) ? (a) : (b))
@@ -88,11 +87,11 @@ void usage_downtime(void);
  ******************/
 typedef struct {
     /* Size of the memory to test on */
-    long mm_size;
+    uint64_t mm_size;
     /* Dirty rate (in MB/s) */
-    long dirty_rate;
+    uint64_t dirty_rate;
     /* mmap() flags to pass over */
-    int map_flags;
+    unsigned int map_flags;
     /* Dirty pattern */
     dirty_pattern pattern;
     /* Whether we're recording the memory access latencies */

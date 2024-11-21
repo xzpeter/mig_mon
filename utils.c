@@ -12,7 +12,7 @@ retry:
     if (ret == -EAGAIN || ret == -EINTR)
         goto retry;
 
-    assert(ret == size);
+    assert((size_t)ret == size);
 }
 
 /* Return 0 when succeed, 1 for retry, assert on error */
@@ -27,7 +27,7 @@ retry:
     if (ret == -EAGAIN || ret == -EINTR)
         goto retry;
 
-    assert(ret == size);
+    assert((size_t)ret == size);
 }
 
 void socket_set_fast_reuse(int fd)
@@ -49,9 +49,9 @@ void pthread_set_name(pthread_t thread, const char *name)
 }
 
 /* Parse some number like "2G", if no unit, using "M" by default. */
-unsigned long parse_size_to_mega(const char *str)
+uint64_t parse_size_to_mega(const char *str)
 {
-    unsigned long value, n = 1;
+    uint64_t value, n = 1;
     char *endptr;
 
     value = strtoul(str, &endptr, 10);
@@ -64,9 +64,11 @@ unsigned long parse_size_to_mega(const char *str)
     case 't':
     case 'T':
         n *= 1024;
+        /* fall through */
     case 'g':
     case 'G':
         n *= 1024;
+        /* fall through */
     case 'm':
     case 'M':
     case '\0': /* This means, no unit, so MB by default */

@@ -146,10 +146,10 @@ static int spike_log_open(const char *spike_log)
 
 int mon_server_callback(int sock, int spike_fd)
 {
-    static in_addr_t target = -1;
+    static in_addr_t target = 0;
     int ret;
     char buf[BUF_LEN];
-    struct sockaddr_in clnt_addr = {};
+    struct sockaddr_in clnt_addr = { 0 };
     socklen_t addr_len = sizeof(clnt_addr);
 
     ret = recvfrom(sock, buf, BUF_LEN, 0, (struct sockaddr *)&clnt_addr,
@@ -159,7 +159,7 @@ int mon_server_callback(int sock, int spike_fd)
         return -1;
     }
 
-    if (target == -1) {
+    if (target == 0) {
         /* this is the first packet we recved. we should init the
            environment and remember the target client we are monitoring
            for this round. */
@@ -193,9 +193,12 @@ int mon_server_rr_callback(int sock, int spike_fd)
 {
     int ret;
     char buf[BUF_LEN];
-    struct sockaddr_in clnt_addr = {};
+    struct sockaddr_in clnt_addr = { 0 };
     socklen_t addr_len = sizeof(clnt_addr);
     uint64_t cur;
+
+    /* unused */
+    (void)spike_fd;
 
     ret = recvfrom(sock, buf, BUF_LEN, 0, (struct sockaddr *)&clnt_addr,
                    &addr_len);
@@ -233,7 +236,7 @@ int mon_server(const char *spike_log, mon_server_cbk server_callback)
 {
     int sock = 0;
     int ret = 0;
-    struct sockaddr_in svr_addr = {};
+    struct sockaddr_in svr_addr = { 0 };
     int spike_fd = spike_log_open(spike_log);
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -276,6 +279,9 @@ int mon_client_callback(int sock, int spike_fd, int interval_ms)
     char buf[BUF_LEN] = "echo";
     int msg_len = strlen(buf);
     int int_us = interval_ms * 1000;
+
+    /* unused */
+    (void)spike_fd;
 
     ret = sendto(sock, buf, msg_len, 0, NULL, 0);
     if (ret == -1) {

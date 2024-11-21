@@ -198,11 +198,11 @@ int sock_read(vm_args *args, void *buf, uint64_t size)
         }
 
         len = args->recv_len - args->recv_cur;
-        len = MIN(len, size);
+        len = MIN((uint64_t)len, size);
 
         if (buf) {
             memcpy(buf, &args->recv_buffer[args->recv_cur], len);
-            buf += len;
+            buf = (void *)((uint64_t)buf + len);
         }
 
         args->recv_cur += len;

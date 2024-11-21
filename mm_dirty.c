@@ -71,6 +71,9 @@ static uint64_t ts_bucket[BUCKET_SIZE];
 
 static void mm_dirty_sig_handler(int sig)
 {
+    /* Mark unused */
+    (void)sig;
+
     if (record_latencies) {
         unsigned int i, n = BUCKET_SIZE;
 
@@ -91,18 +94,18 @@ int mon_mm_dirty(mm_dirty_args *args)
      * set is 2.
      */
     unsigned char cur_val = 2;
-    long pages_per_mb = N_1M / page_size;
+    uint64_t pages_per_mb = N_1M / page_size;
     uint64_t time_iter, time_now;
     uint64_t sleep_ms = 0, elapsed_ms;
     uint64_t ts_start = 0, ts_lat;
-    unsigned long dirtied_mb = 0, mm_npages;
+    uint64_t dirtied_mb = 0, mm_npages;
     dirty_pattern pattern = args->pattern;
     unsigned int map_flags = args->map_flags;
-    long dirty_rate = args->dirty_rate;
-    long mm_size = args->mm_size;
+    uint64_t dirty_rate = args->dirty_rate;
+    uint64_t mm_size = args->mm_size;
     struct sigaction sigact = { 0 };
     float speed;
-    int i;
+    uint64_t i;
 
     record_latencies = args->record_latencies;
 
