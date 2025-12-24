@@ -105,7 +105,11 @@ int main(int argc, char *argv[])
 
     work_mode = argv[1];
 
-    if (!strcmp(work_mode, "-h") || !strcmp(work_mode, "--help")) {
+    if (!strcmp(work_mode, "-h")) {
+        usage();
+        version();
+        return -1;
+    } else if (!strcmp(work_mode, "--help")) {
         usage_downtime();
         usage_mm_dirty();
         usage_vm();

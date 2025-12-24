@@ -7,4 +7,7 @@ add_project_arguments('-DMIG_MON_VERSION="' + meson.project_version() + '"',
 
 sources = files('mig_mon.c', 'downtime.c', 'mm_dirty.c', 'utils.c', 'vm.c')
 
-executable('mig_mon', sources)
+executable('mig_mon',
+           sources,
+           install: true,
+           install_dir: get_option('prefix') / 'bin')
