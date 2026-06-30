@@ -69,6 +69,59 @@ static bool record_latencies;
 #define  BUCKET_SIZE  21
 static uint64_t ts_bucket[BUCKET_SIZE];
 
+/*
+ * Per-interval latency tracking: collect all latencies in the current
+ * reporting interval, then compute p50/p99/max from the histogram.
+ */
+static uint64_t ts_bucket_interval[BUCKET_SIZE];
+static uint64_t ts_interval_max;
+static uint64_t ts_interval_count;
+
+static void latency_interval_reset(void)
+{
+    memset(ts_bucket_interval, 0, sizeof(ts_bucket_interval));
+    ts_interval_max = 0;
+    ts_interval_count = 0;
+}
+
+static void latency_interval_record(uint64_t lat_us, unsigned int index)
+{
+    ts_bucket_interval[index]++;
+    ts_interval_count++;
+    if (lat_us > ts_interval_max)
+        ts_interval_max = lat_us;
+}
+
+/*
+ * Compute a percentile from the interval histogram.  Each bucket i
+ * covers latencies in (2^(i-1), 2^i] us (bucket 0 covers 0 us).
+ * We return 2^i for the bucket where the percentile falls — same
+ * granularity as the final histogram.
+ */
+static uint64_t latency_interval_percentile(double pct)
+{
+    uint64_t target = (uint64_t)(ts_interval_count * pct / 100.0);
+    uint64_t cumulative = 0;
+    unsigned int i;
+
+    for (i = 0; i < BUCKET_SIZE; i++) {
+        cumulative += ts_bucket_interval[i];
+        if (cumulative > target)
+            return (uint64_t)1 << i;
+    }
+    return (uint64_t)1 << (BUCKET_SIZE - 1);
+}
+
+static void latency_interval_report(void)
+{
+    if (!ts_interval_count)
+        return;
+    printf(", lat (us): p50=%"PRIu64" p99=%"PRIu64" max=%"PRIu64"\n",
+           latency_interval_percentile(50),
+           latency_interval_percentile(99),
+           ts_interval_max);
+}
+
 static void mm_dirty_sig_handler(int sig)
 {
     /* Mark unused */
@@ -149,6 +202,9 @@ int mon_mm_dirty(mm_dirty_args *args)
         }
     }
 
+    if (record_latencies)
+        latency_interval_reset();
+
     puts("+------------------------+");
     puts("|   Start Dirty Memory   |");
     puts("+------------------------+");
@@ -193,10 +249,10 @@ int mon_mm_dirty(mm_dirty_args *args)
                     index = 0;
                 else
                     index = 64 - __builtin_clzll(ts_lat);
-                // printf("latency: %lu, index: %d\n", ts_lat, index);
-                if (index > (sizeof(ts_bucket) - 1))
-                    index = (sizeof(ts_bucket) - 1);
+                if (index > BUCKET_SIZE - 1)
+                    index = BUCKET_SIZE - 1;
                 ts_bucket[index]++;
+                latency_interval_record(ts_lat, index);
             }
         }
         if (pattern == PATTERN_SEQ && mm_ptr + N_1M > mm_end) {
@@ -219,9 +275,15 @@ int mon_mm_dirty(mm_dirty_args *args)
         elapsed_ms = time_now - time_iter;
         if (elapsed_ms >= 1000) {
             speed = 1.0 * dirtied_mb / elapsed_ms * 1000;
-            printf("Dirty rate: %.0f (MB/s), duration: %"PRIu64" (ms), "
-                   "load: %.2f%%\n", speed, elapsed_ms,
+            printf("dirty-rate: %.0f (MB/s), time (ms): %"PRIu64", "
+                   "load: %.2f%%", speed, elapsed_ms,
                    100.0 * (elapsed_ms - sleep_ms) / elapsed_ms);
+            if (record_latencies) {
+                latency_interval_report();
+                latency_interval_reset();
+            } else {
+                printf("\n");
+            }
             time_iter = time_now;
             sleep_ms = 0;
             dirtied_mb = 0;
