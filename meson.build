@@ -7,7 +7,10 @@ add_project_arguments('-DMIG_MON_VERSION="' + meson.project_version() + '"',
 
 sources = files('mig_mon.c', 'downtime.c', 'mm_dirty.c', 'utils.c', 'vm.c')
 
+thread_dep = dependency('threads')
+
 executable('mig_mon',
            sources,
+           dependencies: thread_dep,
            install: true,
            install_dir: get_option('prefix') / 'bin')
