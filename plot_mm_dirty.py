@@ -12,6 +12,7 @@ def parse(lines):
             "p50": [], "p99": [], "max": []}
     t = 0
     pat = re.compile(
+        r"(?:(\d{8}-\d{2}:\d{2}:\d{2}),\s*)?"
         r"dirty-rate:\s*([\d.]+)\s*\(MB/s\),\s*"
         r"time \(ms\):\s*(\d+),\s*"
         r"load:\s*([\d.]+)%"
@@ -21,15 +22,15 @@ def parse(lines):
         m = pat.search(line)
         if not m:
             continue
-        duration_ms = int(m.group(2))
+        duration_ms = int(m.group(3))
         t += duration_ms / 1000.0
         data["time"].append(t)
-        data["dirty_rate"].append(float(m.group(1)))
-        data["load"].append(float(m.group(3)))
-        if m.group(4) is not None:
-            data["p50"].append(int(m.group(4)))
-            data["p99"].append(int(m.group(5)))
-            data["max"].append(int(m.group(6)))
+        data["dirty_rate"].append(float(m.group(2)))
+        data["load"].append(float(m.group(4)))
+        if m.group(5) is not None:
+            data["p50"].append(int(m.group(5)))
+            data["p99"].append(int(m.group(6)))
+            data["max"].append(int(m.group(7)))
     return data
 
 

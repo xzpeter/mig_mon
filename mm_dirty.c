@@ -275,6 +275,13 @@ int mon_mm_dirty(mm_dirty_args *args)
         elapsed_ms = time_now - time_iter;
         if (elapsed_ms >= 1000) {
             speed = 1.0 * dirtied_mb / elapsed_ms * 1000;
+            if (record_latencies) {
+                time_t t = time(NULL);
+                struct tm *tm = localtime(&t);
+                char tsbuf[20];
+                strftime(tsbuf, sizeof(tsbuf), "%Y%m%d-%H:%M:%S", tm);
+                printf("%s, ", tsbuf);
+            }
             printf("dirty-rate: %.0f (MB/s), time (ms): %"PRIu64", "
                    "load: %.2f%%", speed, elapsed_ms,
                    100.0 * (elapsed_ms - sleep_ms) / elapsed_ms);
