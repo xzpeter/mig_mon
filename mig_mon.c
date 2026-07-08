@@ -90,6 +90,8 @@ int main(int argc, char *argv[])
     const char *server_ip = NULL;
     const char *spike_log = MIG_MON_SPIKE_LOG_DEF;
 
+    setvbuf(stdout, NULL, _IOLBF, 0);
+
     n_cpus = sysconf(_SC_NPROCESSORS_ONLN);
     page_size = huge_page_size = getpagesize();
 
