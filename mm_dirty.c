@@ -149,7 +149,12 @@ int mon_mm_dirty(mm_dirty_args *args)
     unsigned char cur_val = 2;
     uint64_t pages_per_mb = N_1M / page_size;
     uint64_t time_iter, time_now;
-    uint64_t sleep_ms = 0, elapsed_ms;
+    /*
+     * sleep_ms must be signed: an iteration can overrun its 1-second
+     * deadline, in which case the remaining time to sleep is negative.
+     */
+    int64_t sleep_ms = 0;
+    uint64_t elapsed_ms;
     uint64_t ts_start = 0, ts_lat;
     uint64_t dirtied_mb = 0, mm_npages;
     dirty_pattern pattern = args->pattern;
@@ -265,9 +270,12 @@ int mon_mm_dirty(mm_dirty_args *args)
              * We have dirtied enough, wait for a while until we reach
              * the next second.
              */
-            sleep_ms = 1000 - get_msec() + time_iter;
+            sleep_ms = (int64_t)1000 - (int64_t)(get_msec() - time_iter);
             if (sleep_ms > 0) {
                 usleep(sleep_ms * 1000);
+            } else {
+                /* We overran the deadline, so we did not sleep at all. */
+                sleep_ms = 0;
             }
             while (get_msec() - time_iter < 1000);
         }
